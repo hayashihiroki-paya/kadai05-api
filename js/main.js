@@ -1,77 +1,94 @@
+
+
+
 $("#searchButton").on('click', function () {
     console.log("searchButtonクリックされました");
-    const queryText = `title=${$("#searchWord").val()} AND ndc=913.6 AND sortBy=issued_date/sort.descending`;
-    console.log(queryText);
-    axios.get("https://ndlsearch.ndl.go.jp/api/sru", {
+
+    axios.get("https://app.rakuten.co.jp/services/api/BooksBook/Search/20170404", {
         params: {
-            operation: "searchRetrieve", // API仕様書に必ずつけろと書いてあったので
-            query: queryText, // 検索条件（ISBNの時はハイフンがいる）
-            recordSchema: "dc", // 取得データのスキーマ（ちょっとよくわからない）
-            recordPacking: "xml" // 取得したデータの形（JSON形式で取れない）
-        },
-        responseType: "text"
+            title: "転生したらスライムだった件",
+            booksGenreId: "001004008"
+        }
     })
         .then(response => {
-            // response.data はオブジェクトをjsonにしたみたいに
-            // オブジェクトをhtmlで作って全部文字列にしたデータのようなもの→xml
-            // console.log("response", response);
-            // console.log("response.data", response.data);
-            // 検索条件がここに出る
-            // console.log("response.config.params.query", response.config.params.query);
-            const parser = new DOMParser();
-            const xml = parser.parseFromString(response.data, "text/xml");
-            // console.log("xml",xml);
-            const book = parseDc(xml);
-            console.log("book", book);
-            // title creator publisher
-
-            // いったんHTMLで表示してみる
-            $("#numberOfMatches").text("検索ヒット数：" + book.length + "件");
-            let html = "";
-            for (let i = 0; i < book.length; i++) {
-                // console.log("book[i]",book[i]);
-                html += `
-                    <li>
-                        <ul>${book[i].title}</ul>
-                        <ul>${book[i].creator}</ul>
-                        <ul>${book[i].publisher}</ul>
-                    </li>
-                    `
-            }
-            $("#result").html(html);
+            console.log(response);
         });
 })
 
+// $("#searchButton").on('click', function () {
+//     console.log("searchButtonクリックされました");
+//     const queryText = `title=${$("#searchWord").val()} AND ndc=913.6 AND sortBy=issued_date/sort.descending`;
+//     console.log(queryText);
+//     axios.get("https://ndlsearch.ndl.go.jp/api/sru", {
+//         params: {
+//             operation: "searchRetrieve", // API仕様書に必ずつけろと書いてあったので
+//             query: queryText, // 検索条件（ISBNの時はハイフンがいる）
+//             recordSchema: "dc", // 取得データのスキーマ（ちょっとよくわからない）
+//             recordPacking: "xml" // 取得したデータの形（JSON形式で取れない）
+//         },
+//         responseType: "text"
+//     })
+//         .then(response => {
+//             // response.data はオブジェクトをjsonにしたみたいに
+//             // オブジェクトをhtmlで作って全部文字列にしたデータのようなもの→xml
+//             // console.log("response", response);
+//             // console.log("response.data", response.data);
+//             // 検索条件がここに出る
+//             // console.log("response.config.params.query", response.config.params.query);
+//             const parser = new DOMParser();
+//             const xml = parser.parseFromString(response.data, "text/xml");
+//             // console.log("xml",xml);
+//             const book = parseDc(xml);
+//             console.log("book", book);
+//             // title creator publisher
+
+//             // いったんHTMLで表示してみる
+//             $("#numberOfMatches").text("検索ヒット数：" + book.length + "件");
+//             let html = "";
+//             for (let i = 0; i < book.length; i++) {
+//                 // console.log("book[i]",book[i]);
+//                 html += `
+//                     <li>
+//                         <ul>${book[i].title}</ul>
+//                         <ul>${book[i].creator}</ul>
+//                         <ul>${book[i].publisher}</ul>
+//                     </li>
+//                     `
+//             }
+//             $("#result").html(html);
+//         });
+// })
 
 
-// xmlデータを受け取って、オブジェクト配列に変換して返す関数
-function parseDc(xml) {
-    // 名前空間の指定 これがないとセレクタだけ受け取っても判定できないらしい
-    // Dublin Core（dc:）という名前空間を表す「識別子（URI）」を変数に入れている
-    const DC_NS = "http://purl.org/dc/elements/1.1/";
-    // xmlの中のrecordDataのタグの中身だけ取得する（スコープで分けて管理しやすくする）
-    const recordData = xml.getElementsByTagName("recordData");
-    console.log("xml", xml);
-    console.log('recordData.length', recordData.length);
-    // console.log("recordData", recordData);
 
-    // 一件あたりのオブジェクトを配列に入れる
-    const recordsData = [];
-    for (let i = 0; i < recordData.length; i++) {
-        recordsData[i] = {
-            title:
-                recordData[i]?.getElementsByTagNameNS(DC_NS, "title")[0]?.textContent ?? null,
-            creator:
-                recordData[i]?.getElementsByTagNameNS(DC_NS, "creator")[0]?.textContent ?? null,
-            publisher:
-                recordData[i]?.getElementsByTagNameNS(DC_NS, "publisher")[0]?.textContent ?? null,
-            // language:
-            // recordData[i]?.getElementsByTagNameNS(DC_NS, "language")[0]?.textContent ?? null,
-        };
-    }
+// // xmlデータを受け取って、オブジェクト配列に変換して返す関数
+// function parseDc(xml) {
+//     // 名前空間の指定 これがないとセレクタだけ受け取っても判定できないらしい
+//     // Dublin Core（dc:）という名前空間を表す「識別子（URI）」を変数に入れている
+//     const DC_NS = "http://purl.org/dc/elements/1.1/";
+//     // xmlの中のrecordDataのタグの中身だけ取得する（スコープで分けて管理しやすくする）
+//     const recordData = xml.getElementsByTagName("recordData");
+//     console.log("xml", xml);
+//     console.log('recordData.length', recordData.length);
+//     // console.log("recordData", recordData);
 
-    return recordsData;
-}
+//     // 一件あたりのオブジェクトを配列に入れる
+//     const recordsData = [];
+//     for (let i = 0; i < recordData.length; i++) {
+//         recordsData[i] = {
+//             title:
+//                 recordData[i]?.getElementsByTagNameNS(DC_NS, "title")[0]?.textContent ?? null,
+//             creator:
+//                 recordData[i]?.getElementsByTagNameNS(DC_NS, "creator")[0]?.textContent ?? null,
+//             publisher:
+//                 recordData[i]?.getElementsByTagNameNS(DC_NS, "publisher")[0]?.textContent ?? null,
+//             // language:
+//             // recordData[i]?.getElementsByTagNameNS(DC_NS, "language")[0]?.textContent ?? null,
+//         };
+//     }
+
+//     return recordsData;
+// }
 
 
 
