@@ -1,18 +1,12 @@
-
-
-
 $("#searchButton").on('click', function () {
     console.log("searchButtonクリックされました");
 
-    axios.get("https://app.rakuten.co.jp/services/api/BooksBook/Search/20170404", {
-        params: {
-            title: "転生したらスライムだった件",
-            booksGenreId: "001004008"
-        }
-    })
-        .then(response => {
-            console.log(response);
-        });
+    axios.get("https://kadai05-api-kohl.vercel.app/api/rakuten", {
+        params: { title: "転スラ" }
+    }).then(res => {
+        console.log(res.data);
+    });
+
 })
 
 // $("#searchButton").on('click', function () {

@@ -1,6 +1,11 @@
 import axios from "axios";
 
 export default async function handler(req, res) {
+    // CORS 許可
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    
     const { title } = req.query;
 
     if (!title) {
