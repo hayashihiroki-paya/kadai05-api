@@ -5,8 +5,8 @@ export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    
-    const { title } = req.query;
+
+    const { title, booksGenreId } = req.query;
 
     if (!title) {
         return res.status(400).json({ error: "title is required" });
