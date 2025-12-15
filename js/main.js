@@ -1,8 +1,8 @@
 $("#searchButton").on('click', function () {
     console.log("searchButtonクリックされました");
-
+    const queryText = $("#searchWord").val();
     axios.get("https://kadai05-api-kohl.vercel.app/api/rakuten", {
-        params: { title: "転スラ" }
+        params: { title: queryText, booksGenreId: "001017" }
     }).then(res => {
         console.log(res.data);
     });

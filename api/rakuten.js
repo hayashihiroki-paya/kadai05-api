@@ -19,6 +19,7 @@ export default async function handler(req, res) {
                 params: {
                     applicationId: process.env.RAKUTEN_APP_ID,
                     title,
+                    booksGenreId,
                     format: "json",
                     hits: 20
                 }
