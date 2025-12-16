@@ -7,7 +7,7 @@ $("#searchButton").on('click', async function () {
     const queryText = $("#searchWord").val();
     // 検索ワードをAPIに投げる 今回は楽天のアプリケーションIDが必要だった
     // Vercelを使ってキーを秘匿します
-    await axios.get("/api/rakuten", {
+    await axios.get("https://kadai05-api-kohl.vercel.app/api/rakuten", {
         params: { title: queryText, booksGenreId: "001017" }
     }).then(res => {
         console.log(res.data.Items);
@@ -30,7 +30,7 @@ $("#favorite").droppable({
 
         console.log("何番目のviewBlockか:", index);
         console.log("対応する検索結果情報:", selectionData[index]);
-        axios.post("/api/books/save",{
+        const bookData = {
             author: selectionData[index].author,
             authorKana: selectionData[index].authorKana,
             isbn: selectionData[index].isbn,
@@ -41,7 +41,13 @@ $("#favorite").droppable({
             seriesName: selectionData[index].seriesName,
             title: selectionData[index].title,
             titleKana: selectionData[index].titleKana
-        })
+        }
+        axios.post("https://kadai05-api-kohl.vercel.app/api/save", bookData)
+            .then(() => {
+                alert("保存しました！");
+            }).catch(err => {
+                console.error(err);
+            });
     }
 });
 
