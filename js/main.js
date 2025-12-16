@@ -30,6 +30,7 @@ $("#favorite").droppable({
 
         console.log("何番目のviewBlockか:", index);
         console.log("対応する検索結果情報:", selectionData[index]);
+        
         const bookData = {
             author: selectionData[index].author,
             authorKana: selectionData[index].authorKana,
