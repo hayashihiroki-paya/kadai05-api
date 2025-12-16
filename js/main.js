@@ -7,7 +7,7 @@ $("#searchButton").on('click', async function () {
     const queryText = $("#searchWord").val();
     // 検索ワードをAPIに投げる 今回は楽天のアプリケーションIDが必要だった
     // Vercelを使ってキーを秘匿します
-    await axios.get("https://kadai05-api-kohl.vercel.app/api/rakuten", {
+    await axios.get("/api/rakuten", {
         params: { title: queryText, booksGenreId: "001017" }
     }).then(res => {
         console.log(res.data.Items);
