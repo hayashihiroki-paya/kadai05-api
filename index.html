@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小説に関してＡＰＩをつかってなんかやる</title>
+    <title>好きなラノベ発表ドラゴン</title>
     <!--jQueryを読み込み-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <!--jQuery UIを読み込み-->
@@ -18,18 +18,22 @@
 </head>
 
 <body>
-    <h1>ＡＰＩをつかってなんかやる</h1>
+    <h1>好きなラノベ発表ドラゴン</h1>
     <p>小説限定検索</p>
     <div id="search">
-        <input id="searchWord" type="text">
+        <input id="searchWord" type="text" class="textInput">
         <button id="searchButton" class="button">検索</button>
-    </div>
-    <div id="view">
         <div id="numberOfMatches"></div>
-        <div id="result">
-            
-        </div>
     </div>
+    <div id="main">
+        <div id="view">
+            <div id="result">
+
+            </div>
+        </div>
+        <div id="favorite"></div>
+    </div>
+
     <script type="module" src="./js/main.js"></script>
 </body>
 

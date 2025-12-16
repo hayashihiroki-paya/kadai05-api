@@ -1,13 +1,96 @@
-$("#searchButton").on('click', function () {
+let selectionData = [];
+// 検索ボタンがクリックされたとき
+$("#searchButton").on('click', async function () {
+    // selectionData初期化
+    selectionData.splice(0, selectionData.length);
     console.log("searchButtonクリックされました");
     const queryText = $("#searchWord").val();
-    axios.get("https://kadai05-api-kohl.vercel.app/api/rakuten", {
+    // 検索ワードをAPIに投げる 今回は楽天のアプリケーションIDが必要だった
+    // Vercelを使ってキーを秘匿します
+    await axios.get("https://kadai05-api-kohl.vercel.app/api/rakuten", {
         params: { title: queryText, booksGenreId: "001017" }
     }).then(res => {
-        console.log(res.data);
+        console.log(res.data.Items);
+        const originalData = res.data.Items;
+
+        // 検索結果の配列を渡すと、必要な情報だけ引っこ抜いた配列を返してくれる関数
+        selectionData = sortData(originalData);
+        console.log("selectionData", selectionData);
+
+        // 配列を渡して中身を描画してくれる関数
+        viewData(selectionData);
     });
 
 })
+
+$("#favorite").droppable({
+    drop: function (e, ui) {
+        const $original = ui.draggable;
+        const index = $(".viewBlock").index($original);
+
+        console.log("何番目のviewBlockか:", index);
+        console.log("対応する検索結果情報:", selectionData[index]);
+        axios.post("/api/books/save",{
+            author: selectionData[index].author,
+            authorKana: selectionData[index].authorKana,
+            isbn: selectionData[index].isbn,
+            itemCaption: selectionData[index].itemCaption,
+            largeImageUrl: selectionData[index].largeImageUrl,
+            publisherName: selectionData[index].publisherName,
+            salesDate: selectionData[index].salesDate,
+            seriesName: selectionData[index].seriesName,
+            title: selectionData[index].title,
+            titleKana: selectionData[index].titleKana
+        })
+    }
+});
+
+// 検索結果の配列を渡すと、必要な情報だけ引っこ抜いた配列を返してくれる関数
+function sortData(data) {
+    const newData = [];
+    for (let i = 0; i < data.length; i++) {
+        newData[i] = {
+            author: data[i].Item.author,
+            authorKana: data[i].Item.authorKana,
+            isbn: data[i].Item.isbn,
+            itemCaption: data[i].Item.itemCaption,
+            largeImageUrl: data[i].Item.largeImageUrl,
+            publisherName: data[i].Item.publisherName,
+            salesDate: data[i].Item.salesDate,
+            seriesName: data[i].Item.seriesName,
+            title: data[i].Item.title,
+            titleKana: data[i].Item.titleKana
+        }
+    }
+    return newData;
+}
+
+// 配列を渡して中身を描画してくれる関数
+function viewData(data) {
+    $("#numberOfMatches").text("検索ヒット数：" + data.length + "件");
+    let html = "";
+    for (let i = 0; i < data.length; i++) {
+        html += `
+            <div class="viewBlock">
+                <div>${data[i].title}</div>
+                <div><img src="${data[i].largeImageUrl}" alt="${data[i].title}の表紙"></div>
+                <div>${data[i].author}</div>
+                <div>${data[i].itemCaption}</div>
+                <div>${data[i].publisherName}</div>
+                <div>${data[i].salesDate}</div>
+                <div>${data[i].seriesName}</div>
+            </div>
+            `
+    }
+    $("#result").html(html);
+    $(".viewBlock").draggable({
+        helper: "clone",
+        start: function (e, ui) {
+            ui.helper.width($(this).width());
+            ui.helper.height($(this).height());
+        }
+    });
+}
 
 // $("#searchButton").on('click', function () {
 //     console.log("searchButtonクリックされました");
