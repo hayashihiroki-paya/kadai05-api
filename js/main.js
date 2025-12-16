@@ -82,6 +82,7 @@ $("#favorite").droppable({
 // 削除ボタンクリック時の処理（データ削除）
 // =====================================
 $(document).on("click", ".deleteBtn", function () {
+    console.log("削除ボタンクリックされました");
   const isbn = $(this).data("isbn");
 
   if (!confirm("削除しますか？")) return;
