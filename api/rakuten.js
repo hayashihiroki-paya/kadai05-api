@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Methods", "GET");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    const { title, booksGenreId } = req.query;
+    const { title, booksGenreId } = req.query; // 検索条件を増やすときはこっちも付け足さないといけない（１敗）
 
     if (!title) {
         return res.status(400).json({ error: "title is required" });
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
             "https://app.rakuten.co.jp/services/api/BooksBook/Search/20170404",
             {
                 params: {
-                    applicationId: process.env.RAKUTEN_APP_ID,
+                    applicationId: process.env.RAKUTEN_APP_ID, // 環境変数でキー秘匿
                     title,
                     booksGenreId,
                     format: "json",

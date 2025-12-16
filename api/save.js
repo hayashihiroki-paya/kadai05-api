@@ -4,7 +4,7 @@ import admin from "firebase-admin";
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
+      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON) // 環境変数でキー秘匿
     )
   });
 }
@@ -41,7 +41,9 @@ export default async function handler(req, res) {
     await db.collection("books").doc(data.isbn).set({
       ...data,
       createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    },
+      { merge: true } // 上書き保存（更新）を許可する
+    );
 
     res.status(200).json({ success: true });
   } catch (err) {
