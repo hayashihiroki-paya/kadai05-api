@@ -1,5 +1,15 @@
-// ページ更新時に保存したデータの一覧表示を行う
+// =====================================
+// ページ読み込み時の処理
+// =====================================
+
+// ページ更新時に保存したデータの一覧表示を行い、取得したデータを保存する
+// 保存するための空の配列
+let favoriteBookList = [];
+// 保存したデータをとってきて上の配列に入れつつ表示まで行う
 loadBookList();
+
+// ボタンの見た目をjQuery UI で設定
+$(".button").button();
 
 
 
@@ -10,6 +20,8 @@ loadBookList();
 // データ格納用の空配列
 let selectionData = [];
 $("#searchButton").on('click', async function () {
+    // await処理中にボタンの表示を変える
+    $("#searchButton").text("検索中・・・");
     // selectionData初期化
     selectionData.splice(0, selectionData.length);
     console.log("searchButtonクリックされました");
@@ -24,7 +36,24 @@ $("#searchButton").on('click', async function () {
 
         // 検索結果の配列を渡すと、必要な情報だけ引っこ抜いた配列を返してくれる関数
         selectionData = sortData(originalData);
-        console.log("selectionData", selectionData);
+        console.log("selectionData一回目", selectionData);
+
+
+    });
+
+    // ジャンル指定がもう一つしないと抜けが多かったので追加
+    await axios.get("https://kadai05-api-kohl.vercel.app/api/rakuten", {
+        params: { title: queryText, booksGenreId: "001004008" }
+    }).then(res => {
+        console.log(res.data.Items);
+        const originalData = res.data.Items;
+
+        // 検索結果から必要なデータを抜いて、前の条件で検索したものに統合する
+        selectionData = selectionData.concat(sortData(originalData));
+        console.log("selectionData二回目", selectionData);
+
+        // 検索終わったので元に戻す
+        $("#searchButton").text("検索");
 
         // 配列を渡して中身を描画してくれる関数
         viewData(selectionData);
@@ -40,28 +69,18 @@ $("#searchButton").on('click', async function () {
 
 $("#favorite").droppable({
     drop: async function (e, ui) {
-        const $original = ui.draggable;
-        const index = $(".viewBlock").index($original);
 
+        // ドラッグしてきた要素の情報を格納
+        const $original = ui.draggable;
+        // 何番目の要素かを取得
+        const index = $(".viewBlock").index($original);
+        // 確認
         console.log("何番目のviewBlockか:", index);
         console.log("対応する検索結果情報:", selectionData[index]);
 
-        // 保存するデータを作成 bookData = selectionData[index] でいいのかも
-        const bookData = {
-            author: selectionData[index].author,
-            authorKana: selectionData[index].authorKana,
-            isbn: selectionData[index].isbn,
-            itemCaption: selectionData[index].itemCaption,
-            largeImageUrl: selectionData[index].largeImageUrl,
-            publisherName: selectionData[index].publisherName,
-            salesDate: selectionData[index].salesDate,
-            seriesName: selectionData[index].seriesName,
-            title: selectionData[index].title,
-            titleKana: selectionData[index].titleKana
-        }
         // save.js経由でVercelを使って、APIキーを秘匿しながら保存処理
         await axios.post("https://kadai05-api-kohl.vercel.app/api/save",
-            bookData,
+            selectionData[index],
             {
                 headers: {
                     "Content-Type": "application/json"
@@ -79,26 +98,174 @@ $("#favorite").droppable({
 
 
 // =====================================
-// 削除ボタンクリック時の処理（データ削除）
+// お気に入り削除ボタンクリック時の処理（データ削除）
 // =====================================
 $(document).on("click", ".deleteBtn", function () {
     console.log("削除ボタンクリックされました");
-  const isbn = $(this).data("isbn");
 
-  if (!confirm("削除しますか？")) return;
+    // deleteBtnに持たせていたisbnの情報を取得（FirebaseのIDになる）
+    const isbn = $(this).data("isbn");
 
-  axios.delete("https://kadai05-api-kohl.vercel.app/api/delete", {
-    params: { isbn }
-  })
-  .then(() => {
-    alert("削除しました");
-    loadBookList(); // 再読み込み
-  })
-  .catch(err => {
-    console.error(err);
-  });
+    // 削除は特に誤操作したくないと思うのでポップアップ出します
+    if (!confirm("削除しますか？")) return;
+
+    // delete.js経由してVercel使って、API秘匿しながらデータベース削除
+    axios.delete("https://kadai05-api-kohl.vercel.app/api/delete", {
+        params: { isbn }
+    })
+        .then(() => {
+            alert("削除しました");
+            $("#detailedInformation").html(""); // 詳細画面クリア
+            $("#detailedInformation").css('display', 'none'); // 画面も消す
+            loadBookList(); // 再読み込み
+        })
+        .catch(err => {
+            console.error(err);
+        });
 });
 
+
+
+// =====================================
+// 保存済みデータクリック時の処理（詳細情報、コメント記入欄表示）
+// =====================================
+$(document).on("click", ".book", function () {
+
+    console.log("保存済みデータクリックされました");
+    // 保存リスト何番目か取得
+    const index = $(".book").index(this);
+    console.log("何番目か：", index);
+    // 親要素の横幅に合わせて表示するために現在の幅を取得
+    const parentWidth = $("#view").width();
+    console.log("parentWidth", parentWidth);
+
+    // 詳細情報画面を表示する
+    $("#detailedInformation").css('display', 'block');
+    $("#detailedInformation").css('width', parentWidth);
+    $("#detailedInformation").css('z-index', '100');
+
+    // htmlの中身を作成する
+    let html =
+        `<div>
+            <p>${favoriteBookList[index].title}</p>
+            <div><img src="${favoriteBookList[index].largeImageUrl}" alt="${favoriteBookList[index].title}の表紙"></div>
+            <p>${favoriteBookList[index].author}</p>
+            <p>${favoriteBookList[index].itemCaption}</p>
+            <p>${favoriteBookList[index].publisherName}</p>
+            <p>${favoriteBookList[index].salesDate}</p>
+            <p>${favoriteBookList[index].seriesName}</p>
+        </div>
+        <div>
+            <p id="comment">`;
+    console.log("favoriteBookList[index].comment", favoriteBookList[index].comment);
+    // commentの情報があるときは表示する
+    if (favoriteBookList[index].comment) {
+        html += favoriteBookList[index].comment;
+    }
+    html +=
+        `</p>
+            <div><input id="commentText" type="textarea" class="textInput"></div>
+            <div>
+                <button class="commentBtn button" data-index=${index}>コメントする</button>
+                <button class="commentDeleteBtn button" data-index=${index}>コメント削除</button>
+                <button class="deleteBtn button" data-isbn="${favoriteBookList[index].isbn}">お気に入りから削除</button>
+                <button class="closeBtn button">詳細画面を閉じる</button>
+            </div>
+        </div>
+        `;
+
+    // 詳細画面にhtmlを反映する
+    $("#detailedInformation").html(html);
+
+    // 作成したボタンをUIデザインに変更する
+    $(".button").button();
+});
+
+
+
+// =====================================
+// コメントボタンクリック時の処理（データ追加）
+// =====================================
+$(document).on("click", ".commentBtn", async function () {
+
+    console.log("コメントボタンクリックされました");
+
+    // 保存中にボタンの表示を変更する
+    $(".commentBtn").text("保存中・・・");
+
+    // インデックス番号取得
+    const index = $(this).data("index");
+    console.log("index", index);
+
+    // オブジェクトデータのコメントを入力内容で更新する
+    favoriteBookList[index].comment = $('#commentText').val();
+    console.log(favoriteBookList[index].comment); // ちゃんと入ってるの確認しました
+
+    // データ更新
+    // save.js経由でVercelを使って、APIキーを秘匿しながら保存処理
+    await axios.post("https://kadai05-api-kohl.vercel.app/api/save",
+        favoriteBookList[index],
+        {
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        .then(() => {
+            alert("保存しました！");
+            $("#comment").text(favoriteBookList[index].comment); // コメント欄に表示
+            $('#commentText').val(""); // 入力欄クリア
+            $(".commentBtn").text("コメントする"); // 保存終わったのでボタンの表示を戻す
+            loadBookList(); // 保存リスト更新
+        }).catch(err => {
+            console.error(err);
+        });
+});
+
+
+
+// =====================================
+// コメント削除クリック時の処理（commentデータを空文字で上書き）
+// =====================================
+$(document).on("click", ".commentDeleteBtn", async function () {
+
+    console.log("コメント削除クリックされました");
+
+    // 削除中にボタンの表示を変更
+    $(".commentDeleteBtn").text("削除中・・・");
+
+    // インデックス番号取得
+    const index = $(this).data("index");
+    console.log("index", index);
+    favoriteBookList[index].comment = ""; // 空文字で上書き
+    console.log(favoriteBookList[index].comment); // ちゃんと消えてるの確認しました    
+
+    // データ更新
+    // save.js経由でVercelを使って、APIキーを秘匿しながら保存処理
+    await axios.post("https://kadai05-api-kohl.vercel.app/api/save",
+        favoriteBookList[index],
+        {
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        .then(() => {
+            alert("削除しました！");
+            $("#comment").text(""); // コメント欄もクリア
+            $(".commentDeleteBtn").text("コメント削除"); // 削除終了でボタンの表示を戻す
+            loadBookList(); // 保存リスト更新
+        }).catch(err => {
+            console.error(err);
+        });
+});
+
+
+// =====================================
+// 閉じるボタンクリック時の処理（詳細画面クリアして閉じる）
+// =====================================
+$(document).on("click", ".closeBtn", async function () {
+    $("#detailedInformation").html("");
+    $("#detailedInformation").css('display', 'none');
+});
 
 
 // =====================================
@@ -107,7 +274,11 @@ $(document).on("click", ".deleteBtn", function () {
 
 // 検索結果の配列を渡すと、必要な情報だけ引っこ抜いた配列を返してくれる関数
 function sortData(data) {
+
+    // 格納用の空配列作成
     const newData = [];
+
+    // データの数だけ回して必要な情報だけ抜き取る
     for (let i = 0; i < data.length; i++) {
         newData[i] = {
             author: data[i].Item.author,
@@ -119,7 +290,8 @@ function sortData(data) {
             salesDate: data[i].Item.salesDate,
             seriesName: data[i].Item.seriesName,
             title: data[i].Item.title,
-            titleKana: data[i].Item.titleKana
+            titleKana: data[i].Item.titleKana,
+            comment: "" // コメントを空で用意しておく
         }
     }
     return newData;
@@ -127,39 +299,51 @@ function sortData(data) {
 
 // 検索結果の配列を渡して中身を描画してくれる関数
 function viewData(data) {
+
+    // 何件ヒットしたかを表示
     $("#numberOfMatches").text("検索ヒット数：" + data.length + "件");
+
+    // 検索結果のhtmlを作成
     let html = "";
     for (let i = 0; i < data.length; i++) {
         html += `
             <div class="viewBlock">
-                <div>${data[i].title}</div>
+                <p>${data[i].title}</p>
                 <div><img src="${data[i].largeImageUrl}" alt="${data[i].title}の表紙"></div>
-                <div>${data[i].author}</div>
-                <div>${data[i].itemCaption}</div>
-                <div>${data[i].publisherName}</div>
-                <div>${data[i].salesDate}</div>
-                <div>${data[i].seriesName}</div>
+                <p>${data[i].author}</p>
+                <p>${data[i].itemCaption}</p>
+                <p>${data[i].publisherName}</p>
+                <p>${data[i].salesDate}</p>
+                <p>${data[i].seriesName}</p>
             </div>
             `
     }
+    // htmlを反映
     $("#result").html(html);
+
+    // ここで作った要素なのでここでドラッグできるように設定する
     $(".viewBlock").draggable({
-        helper: "clone",
+        helper: "clone", // クローンがドラッグされるようにする
         start: function (e, ui) {
-            ui.helper.width($(this).width());
-            ui.helper.height($(this).height());
+            ui.helper.width($(this).width()); // クローンはbody直下に生成されるらしいので
+            ui.helper.height($(this).height()); // %指定だとサイズがおかしくなるので元データのサイズを継承
         }
     });
 }
 
 // firebaseに保存されてるデータを全権取得する関数
 // 内部で一覧表示する関数を使って表示まで行う
+// 全権取得したデータを戻り値で返す（ほかのところで操作できるように）
 function loadBookList() {
     console.log("読み込み開始");
+    // list.jsを使ってVercel経由でAPI秘匿
     axios.get("https://kadai05-api-kohl.vercel.app/api/list")
         .then(res => {
-            console.log(res.data);
+            console.log("res.data", res.data);
+            // 受け取ったデータを表示する関数
             renderBookList(res.data);
+            favoriteBookList = res.data; // ローカルデータも更新
+            console.log(favoriteBookList);
         })
         .catch(err => {
             console.error(err);
@@ -168,15 +352,14 @@ function loadBookList() {
 
 // 受け取った保存データを一覧表示する関数
 function renderBookList(list) {
-    $("#bookList").empty();
+    $("#bookList").empty(); // いったん中身消す
 
     list.forEach(book => {
         $("#bookList").append(`
-            <div class="book">
+            <div class="book" data-isbn="${book.isbn}">
                 <p>${book.title}</p>
                 <p>${book.author}</p>
                 <img src="${book.largeImageUrl}">
-                <button class="deleteBtn" data-isbn="${book.isbn}">削除</button>
             </div>
         `);
     });

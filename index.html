@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>好きなラノベ発表ドラゴン</title>
+    <title>ラノベならべ</title>
     <!--jQueryを読み込み-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <!--jQuery UIを読み込み-->
@@ -18,21 +18,29 @@
 </head>
 
 <body>
-    <h1>好きなラノベ発表ドラゴン</h1>
-    <p>小説限定検索</p>
+    <h1 class="title">📚ラノベならべ📚</h1>
+    <p class="titleCaption">好きなラノベを集めて並べてあなただけのバーチャル本棚を作ろう！</p>
     <div id="search">
         <input id="searchWord" type="text" class="textInput">
         <button id="searchButton" class="button">検索</button>
         <div id="numberOfMatches"></div>
     </div>
     <div id="main">
-        <div id="view">
-            <div id="result">
+        <div id="leftView">
+            <div id="detailedInformation">
 
             </div>
+            <div id="view">
+
+                <div id="result">
+
+                </div>
+            </div>
         </div>
+
         <div id="favorite">
             <p>お気に入り登録リスト</p>
+            <p>検索結果から登録したいものをドラッグ＆ドロップしてください</p>
             <div id="bookList"></div>
         </div>
     </div>
