@@ -1,8 +1,14 @@
 // ページ更新時に保存したデータの一覧表示を行う
 loadBookList();
 
-let selectionData = [];
+
+
+// =====================================
 // 検索ボタンがクリックされたとき
+// =====================================
+
+// データ格納用の空配列
+let selectionData = [];
 $("#searchButton").on('click', async function () {
     // selectionData初期化
     selectionData.splice(0, selectionData.length);
@@ -26,14 +32,21 @@ $("#searchButton").on('click', async function () {
 
 })
 
+
+
+// =====================================
+// お気に入りゾーンにドロップされたときの処理（データ保存する）
+// =====================================
+
 $("#favorite").droppable({
-    drop: function (e, ui) {
+    drop: async function (e, ui) {
         const $original = ui.draggable;
         const index = $(".viewBlock").index($original);
 
         console.log("何番目のviewBlockか:", index);
         console.log("対応する検索結果情報:", selectionData[index]);
 
+        // 保存するデータを作成 bookData = selectionData[index] でいいのかも
         const bookData = {
             author: selectionData[index].author,
             authorKana: selectionData[index].authorKana,
@@ -46,7 +59,8 @@ $("#favorite").droppable({
             title: selectionData[index].title,
             titleKana: selectionData[index].titleKana
         }
-        axios.post("https://kadai05-api-kohl.vercel.app/api/save",
+        // save.js経由でVercelを使って、APIキーを秘匿しながら保存処理
+        await axios.post("https://kadai05-api-kohl.vercel.app/api/save",
             bookData,
             {
                 headers: {
@@ -55,11 +69,40 @@ $("#favorite").droppable({
             })
             .then(() => {
                 alert("保存しました！");
+                loadBookList(); // 保存リスト更新
             }).catch(err => {
                 console.error(err);
             });
     }
 });
+
+
+
+// =====================================
+// 削除ボタンクリック時の処理（データ削除）
+// =====================================
+$(document).on("click", ".deleteBtn", function () {
+  const isbn = $(this).data("isbn");
+
+  if (!confirm("削除しますか？")) return;
+
+  axios.delete("https://kadai05-api-kohl.vercel.app/api/delete", {
+    params: { isbn }
+  })
+  .then(() => {
+    alert("削除しました");
+    loadBookList(); // 再読み込み
+  })
+  .catch(err => {
+    console.error(err);
+  });
+});
+
+
+
+// =====================================
+// 以下、関数まとめ
+// =====================================
 
 // 検索結果の配列を渡すと、必要な情報だけ引っこ抜いた配列を返してくれる関数
 function sortData(data) {
@@ -81,7 +124,7 @@ function sortData(data) {
     return newData;
 }
 
-// 配列を渡して中身を描画してくれる関数
+// 検索結果の配列を渡して中身を描画してくれる関数
 function viewData(data) {
     $("#numberOfMatches").text("検索ヒット数：" + data.length + "件");
     let html = "";
@@ -112,34 +155,58 @@ function viewData(data) {
 // 内部で一覧表示する関数を使って表示まで行う
 function loadBookList() {
     console.log("読み込み開始");
-  axios.get("https://kadai05-api-kohl.vercel.app/api/list")
-    .then(res => {
-      console.log(res.data);
-      renderBookList(res.data);
-    })
-    .catch(err => {
-      console.error(err);
-    });
+    axios.get("https://kadai05-api-kohl.vercel.app/api/list")
+        .then(res => {
+            console.log(res.data);
+            renderBookList(res.data);
+        })
+        .catch(err => {
+            console.error(err);
+        });
 }
 
 // 受け取った保存データを一覧表示する関数
 function renderBookList(list) {
-  $("#bookList").empty();
+    $("#bookList").empty();
 
-  list.forEach(book => {
-    $("#bookList").append(`
-      <div class="book">
-        <img src="${book.largeImageUrl}" width="80">
-        <p>${book.title}</p>
-        <p>${book.author}</p>
-        <button class="deleteBtn" data-isbn="${book.isbn}">
-          削除
-        </button>
-      </div>
-    `);
-  });
+    list.forEach(book => {
+        $("#bookList").append(`
+            <div class="book">
+                <p>${book.title}</p>
+                <p>${book.author}</p>
+                <img src="${book.largeImageUrl}">
+                <button class="deleteBtn" data-isbn="${book.isbn}">削除</button>
+            </div>
+        `);
+    });
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// =============================================================================
+// 国立国会図書館APIを使っていた時の残骸
+// xmlデータから必要な情報を抜き出す処理とかでめちゃ苦労したので
+// 後々参考にできるようにどこかにまとめなおすため取っておきます
+// =============================================================================
 
 // $("#searchButton").on('click', function () {
 //     console.log("searchButtonクリックされました");
@@ -185,7 +252,7 @@ function renderBookList(list) {
 //         });
 // })
 
-
+// ==========================================================================
 
 // // xmlデータを受け取って、オブジェクト配列に変換して返す関数
 // function parseDc(xml) {
@@ -216,23 +283,7 @@ function renderBookList(list) {
 //     return recordsData;
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// ==========================================================================
 
 // const queryText = "title=転生したらスライムだった件 AND ndc=913.6";
 // // title=転生したらスライムだった件
@@ -299,6 +350,15 @@ function renderBookList(list) {
 //             recordData?.getElementsByTagNameNS(DC_NS, "language")[0]?.textContent ?? null,
 //     };
 // }
+
+
+
+
+// =============================================================================
+// こっちは外部JSONデータをローカルに保存しておいて、そこからデータを取り出す処理
+// JSON Lines（NDJSON / JSONL）形式といわれる １行ごとにJSONファイルが分かれているものだった
+// これもどこかにまとめなおすために残しときます
+// =============================================================================
 
 // // ---------------------------------------------------------------------------------
 // // 外部の検索サイト（国立国会図書館サーチ）の検索結果をJSONデータでダウンロードして利用する
