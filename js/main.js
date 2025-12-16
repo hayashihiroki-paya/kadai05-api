@@ -30,7 +30,7 @@ $("#favorite").droppable({
 
         console.log("何番目のviewBlockか:", index);
         console.log("対応する検索結果情報:", selectionData[index]);
-        
+
         const bookData = {
             author: selectionData[index].author,
             authorKana: selectionData[index].authorKana,
@@ -43,7 +43,13 @@ $("#favorite").droppable({
             title: selectionData[index].title,
             titleKana: selectionData[index].titleKana
         }
-        axios.post("https://kadai05-api-kohl.vercel.app/api/save", bookData)
+        axios.post("https://kadai05-api-kohl.vercel.app/api/save",
+            bookData,
+            {
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
             .then(() => {
                 alert("保存しました！");
             }).catch(err => {
