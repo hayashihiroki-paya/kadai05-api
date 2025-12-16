@@ -1,3 +1,6 @@
+// ページ更新時に保存したデータの一覧表示を行う
+loadBookList();
+
 let selectionData = [];
 // 検索ボタンがクリックされたとき
 $("#searchButton").on('click', async function () {
@@ -104,6 +107,39 @@ function viewData(data) {
         }
     });
 }
+
+// firebaseに保存されてるデータを全権取得する関数
+// 内部で一覧表示する関数を使って表示まで行う
+function loadBookList() {
+    console.log("読み込み開始");
+  axios.get("https://kadai05-api-kohl.vercel.app/api/list")
+    .then(res => {
+      console.log(res.data);
+      renderBookList(res.data);
+    })
+    .catch(err => {
+      console.error(err);
+    });
+}
+
+// 受け取った保存データを一覧表示する関数
+function renderBookList(list) {
+  $("#bookList").empty();
+
+  list.forEach(book => {
+    $("#bookList").append(`
+      <div class="book">
+        <img src="${book.largeImageUrl}" width="80">
+        <p>${book.title}</p>
+        <p>${book.author}</p>
+        <button class="deleteBtn" data-isbn="${book.isbn}">
+          削除
+        </button>
+      </div>
+    `);
+  });
+}
+
 
 // $("#searchButton").on('click', function () {
 //     console.log("searchButtonクリックされました");
