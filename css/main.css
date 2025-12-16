@@ -1,0 +1,40 @@
+* {
+    box-sizing: border-box;
+}
+
+#view {
+    display: flex;
+    width: 50%;
+    border: solid 1px black;
+}
+
+.viewBlock{
+    border: solid 1px black;
+    width: 50%;
+    z-index: 100;
+}
+
+.viewBlock:hover{
+    background-color: lightcyan;
+}
+
+#result {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+#favorite {
+    position: sticky;
+    width: 45%;
+    height: 600px;
+    top: 100px;
+    margin-left: 30px;
+    border: solid 1px black;
+    background-color: pink;
+    z-index: 0;
+}
+
+#main {
+    display: flex;
+}
